@@ -1,15 +1,480 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>
-            websiteku
-        </title>
 
-        <body>
-            <h1>
-                Hello World saja
-            </h1>
-        </body>
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Radar Cuaca</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+
+
+
+
+    <link rel="shortcut icon" href="img/ico/favicon-96x96.png" type="image/x-icon">
+    <link rel="icon" href="img/ico/favicon-96x96.png" type="image/x-icon">
+
+
+    <script src="js/moment.js"></script>
+    <script src="js/moment-with-locales.js"></script>
+    <script src="js/moment-timezone-with-data.js"></script>
+
+
+    <style>
+        #map {
+            /* width: 894px; */
+            width: 80%;
+            height: 650px;
+            top: 0px;
+            margin-left: 0;
+            margin-right: 0
+        }
+
+        .legend-bg {
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            height: 200px;
+            font-size: 20px;
+            /* Sesuaikan ukuran font sesuai kebutuhan Anda */
+        }
+
+        .text-radar {
+            font-size: 20px;
+            color: rgb(0, 0, 0);
+
+        }
+
+        /* CSS untuk mengatur tampilan tabel di tengah legenda */
+        .info.legenda {
+            text-align: center;
+            /* Untuk mengatur teks ke tengah */
+        }
+
+        /* CSS untuk mengatur tampilan tabel dalam legenda */
+        .info.legenda table {
+            margin: auto;
+            /* Untuk mengatur tabel di tengah */
+        }
+
+        /* CSS untuk mengatur latar belakang legenda */
+        .legend-bg {
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .nav-link {
+            border: 2px solid transparent;
+            border-radius: 80px;
+            padding: 0px 20px;
+            display: inline-block;
+            text-decoration: none;
+            margin-right: 10px;
+            background-color: #3498db;
+            /* Warna latar belakang default */
+            color: #fff;
+            /* Warna teks default */
+        }
+
+        .nav-link:hover {
+            background-color: #e74c3c;
+            /* Warna latar belakang saat dihover */
+            color: #fff;
+            /* Warna teks saat dihover */
+            border-color: #e74c3c;
+            /* Warna border saat dihover */
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+            /* Animasi perubahan */
+        }
+
+
+        /* body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+           
+        } */
+
+        #downloadButton {
+            cursor: pointer;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
+        .coordinate {
+  position: absolute;
+  bottom: 50px; /* Jarak dari bawah peta */
+  right: 320px; /* Jarak dari sisi kanan peta */
+  background-color: rgba(219, 219, 219, 0.8); /* Warna latar belakang elemen */
+  padding: 5px; /* Padding untuk elemen */
+  border: 1px solid #ccc; /* Garis batas elemen */
+  border-radius: 5px; /* Sudut elemen yang berbulat */
+  z-index: 1000; /* Indeks z agar elemen tampil di atas peta */
+}
+
+    </style>
+</head>
+
+<body>
+    <div id="map">
+
+    </div>
+
+    <br>
+    <button id="downloadButton" class="nav-link">Unduh Gambar Peta</button>
+    <br>
+    <div id="latLngDisplay" class="coordinate">Lintang: <span id="lat"></span>, Bujur: <span id="lng"></span></div>
+    <img id="logo" src="img/logobmkg_b.svg" style="display: none;" />
+    <img id="legend" src="img/legendaradar.svg" style="display: none;" />
+    <img id="point" src="img/point.svg" style="display: none;" />
+</body>
+
+<script>
+
+    var center = new L.latLng(-6.5, 106.854924);
+    var mbAttr = '<a href="https://www.openstreetmap.org/">OpenStreetMap</a>' +
+        '<a href="https://creativecommons.org/licenses/by-sa/2.0/"></a>, ' +
+        ' <a href="https://www.mapbox.com/"></a>',
+        mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+
+    var map = L.map('map', {
+        maxZoom: 15,
+        minZoom: 0,
+    }).setView(center, 9.467)
+    var Esri_DarkGreyCanvas = L.tileLayer(
+        "http://{s}.sm.mapstack.stamen.com/" +
+        "(toner-lite,$fff[difference],$fff[@23],$fff[hsl-saturation@20])/" + "{z}/{x}/{y}.png",
+        // {
+        // attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, ' +
+        // 'NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+        // }
+    )
+    var OSM = L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        //attribution: 'Data © <a href="http://osm.org/copyright">OpenStreetMap</a>',
+        maxZoom: 15
+    }).addTo(map);
+
+    // Check if map is defined and add image overlay for Radar
+    if (map && latestImageRadar && latLngBoundsRadar) {
+        var imageRadar = L.imageOverlay(latestImageRadar, latLngBoundsRadar, {
+            opacity: 0.8,
+            interactive: true,
+        }).addTo(map);
+    }
+
+    var legend = L.control({ position: "topright" });
+    legend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legenda'),
+            teks1 = ["JAK - CMAX(Z)"],
+            teks2 = ["<b><span class ='text-radar' id='radardate'></span> WIB</b></span>"],
+            labels = ['img/logobmkg_b.svg'];
+        labellegenda = ['img/legendaradar.svg'];
+        labelpoint = ['img/point.svg'];
+        teks3 = ["Lokasi Kejadian"]
+        teks4 = ["@ Sub Bidang Pengolahan Citra Radar Cuaca"]
+
+
+        // Create a table
+        var table = "<table cellpadding='2' cellspacing='0' border='1'>";
+        table += "<tr>";
+        table += "<th rowspan='2' align='center'><img src='" + labels[0] + "' height='70'></th>";
+        table += "<th align='center'>" + teks1[0] + "</th>";
+        table += "</tr>";
+        table += "<tr>";
+        table += "<td align='center'>" + teks2[0] + "</td>";
+        table += "</tr>";
+
+        table += "<tr>";
+        table += "<th colspan='2' align='center'><img src='" + labellegenda[0] + "' height='35'></th>";
+        table += "</tr>";
+        table += "<tr>";
+        table += "<td colspan='2' align='center'><img src='" + labelpoint[0] + "' height='30'> " + teks3[0] + "</td>";
+        table += "</tr>";
+        table += "<tr>";
+        table += "<td colspan='2' align='center' style='font-size: 12px;'>" + teks4[0] + "</td>";
+        table += "</tr>";
+        table += "</table>";
+
+
+
+        // Add the table to the div
+        div.innerHTML = table;
+
+        // Add a background square
+        div.innerHTML = "<div class='legend-bg'>" + div.innerHTML + "</div>";
+
+        return div;
+    };
+    legend.addTo(map);
+
+
+
+
+    // Radar Data
+
+    function getAPI(url) {
+        var value = $.ajax({
+            url: url,
+            async: false,
+            dataType: 'json'
+        }).responseJSON;
+        return value;
+    }
+    var radarID = 'GNS';
+    var token = 'd55483ba0ac25dda1596bb7115351a9570d04324123d55cf14a58b9c8cf6';
+    var urlImage = 'https://radar.bmkg.go.id:8090/sidarmaimage?' + 'token=' + token + '&radar=' + radarID;
+
+    // Fetch data for Radar
+    var resultRadar = getAPI(urlImage);
+    var latestImageRadar = resultRadar && resultRadar.Latest && resultRadar.Latest.file;
+    var latLngBoundsRadar = resultRadar && resultRadar.bounds && L.latLngBounds([resultRadar.bounds.overlayBRC, resultRadar.bounds.overlayTLC]);
+
+
+    // Check if map is defined and add image overlay for Radar
+    if (map && latestImageRadar && latLngBoundsRadar) {
+        var imageRadar = L.imageOverlay(latestImageRadar, latLngBoundsRadar, {
+            opacity: 0.8,
+            interactive: true,
+        }).addTo(map);
+    }
+
+    // Function to extract date and time from the radar image URL
+    function extractDateTimeFromRadarImageUrl(imageUrlRadar) {
+        var dateTimeString = imageUrlRadar.match(/GNS-(\d{8})-(\d{2})(\d{2})\.png/);
+
+        if (dateTimeString && dateTimeString.length >= 4) {
+            var dateString = dateTimeString[1];
+            var hourString = dateTimeString[2];
+            var minuteString = dateTimeString[3];
+
+            var year = dateString.substring(0, 4);
+            var month = dateString.substring(4, 6);
+            var day = dateString.substring(6, 8);
+
+            var dateTimeString = year + '-' + month + '-' + day + 'T' + hourString + ':' + minuteString;
+
+            return dateTimeString;
+        }
+
+        return null;
+    }
+
+    // Function to convert UTC time to WIB (Asia/Jakarta time zone)
+    function convertUtcToWib(dateTimeUtc) {
+        var dateTimeWib = moment.tz(dateTimeUtc, 'UTC').tz('Asia/Jakarta').format('DD - MM - YYYY  HH:mm');
+        return dateTimeWib;
+    }
+
+
+    // Assuming you have the URL for the latest radar image in the variable `latestImageRadar`
+    var latestImageDateTimeRadar = extractDateTimeFromRadarImageUrl(latestImageRadar);
+    var dateTimeWibRadar = convertUtcToWib(latestImageDateTimeRadar);
+
+    console.log(dateTimeWibRadar);
+    console.log(latestImageRadar);
+
+    // Menampilkan tanggal dan waktu dalam elemen dengan ID 'radardate'
+    document.getElementById('radardate').innerHTML = dateTimeWibRadar;
+ 
+  // URL gambar overlay
+
+  moment.locale('id')
+    var d0 = moment.utc().format('YYYY-MM-DD HH:mm:ss');
+    var d00 = moment.utc().utcOffset('+07:00').format('YYYY-MM-DD HH:mm:ss');
+    var d03 = moment.utc().utcOffset('+10:00').format('HH:00');
+    var data_d00 = moment.utc().add(-1, 'days').add(7, 'hours').format('YYYYMMDD');
+    var data_d01 = moment.utc().add(0, 'days').add(7, 'hours').format('YYYYMMDD');
+//   var imageUrlCH = 'https://signature.bmkg.go.id/api21/mpl_req/ecmwf/tp24/1000/' + data_d00 + '00/' + data_d01 + '00/{z}/{x}/{y}.png?ci=1&overlays=contourf';
+
+// // Mencetak URL gambar menggunakan console log
+// console.log('Image URL:', imageUrlCH);
+
+// // Batas koordinat peta
+// var bounds = L.latLngBounds([[-11, 94], [6, 141]]);
+
+// // Tambahkan overlay gambar ke peta dengan z-index 1000
+// var imageCH = L.tileLayer(imageUrlCH, {
+//     tms: true,
+//     opacity: 0.5
+// }).setZIndex(1000).addTo(map);  
+
+// Satelit Data
+var satelitID = 'JAK';
+    var satelit = 'H08EH';
+    var tokensatelit = 'd55483ba0ac25dda1596bb7115351a9570d04324123d55cf14a58b9c8cf6';
+    var urlImageSatelit = 'https://radar.bmkg.go.id:8090/sidarmaimage?' + 'token=' + tokensatelit + '&radar=' + satelitID + '&product=' + satelit;
+
+    // Fetch data for Satelit
+    var resultSatelit = getAPI(urlImageSatelit);
+    var latestImageSatelit = resultSatelit && resultSatelit.Latest && resultSatelit.Latest.file;
+    var latLngBoundsSatelit = resultSatelit && resultSatelit.bounds && L.latLngBounds([[-20, 94], [20, 141]]);
+
+    // Check if map is defined and add image overlay for Satelit
+    if (map && latestImageSatelit && latLngBoundsSatelit) {
+        var imageSatelit = L.imageOverlay(latestImageSatelit, latLngBoundsSatelit, {
+            opacity: 0.3,
+            interactive: true,
+        }).addTo(map);
+
+        console.log(latestImageSatelit);
+    }
+
+// Radar Data
+var radarID = 'JAK';
+    var token = 'd55483ba0ac25dda1596bb7115351a9570d04324123d55cf14a58b9c8cf6';
+    var urlImage = 'https://radar.bmkg.go.id:8090/sidarmaimage?' + 'token=' + token + '&radar=' + radarID;
+
+    // Fetch data for Radar
+    var resultRadar = getAPI(urlImage);
+    var latestImageRadar = resultRadar && resultRadar.Latest && resultRadar.Latest.file;
+    var latLngBoundsRadar = resultRadar && resultRadar.bounds && L.latLngBounds([resultRadar.bounds.overlayBRC, resultRadar.bounds.overlayTLC]);
+
+    // Check if map is defined and add image overlay for Radar
+    if (map && latestImageRadar && latLngBoundsRadar) {
+        var imageRadar = L.imageOverlay(latestImageRadar, latLngBoundsRadar, {
+            opacity: 0.8,
+            interactive: true,
+        }).addTo(map);
+    }
+
+
+
+
+
+
+
+
+
+
+
+    // Inisialisasi ikon marker merah
+var redIcon = L.icon({
+    iconUrl: 'img/point.svg', // URL ikon merah
+    iconSize: [25, 41], // Ukuran ikon
+    iconAnchor: [12, 41], // Anchor point ikon
+    popupAnchor: [1, -34] // Anchor point untuk popup
+});
+
+// Daftar markers
+var markers = [];
+
+// Event handler ketika map di-klik
+map.on('click', function (e) {
+    // Buat marker baru
+    var marker = L.marker(e.latlng, {
+        draggable: true,
+        icon: redIcon
+    }).addTo(map);
+
+    // Event handler ketika klik kanan pada marker
+    marker.on('contextmenu', function (event) {
+        // Tangani event klik kanan pada marker
+        map.removeLayer(marker); // Hapus marker dari peta saat diklik kanan
+    });
+
+    // Tambahkan marker ke dalam daftar markers
+    markers.push(marker);
+});
+
+// Event handler ketika tombol unduh diklik
+document.getElementById('downloadButton').addEventListener('click', function () {
+    // Sembunyikan tombol sementara sebelum mengambil tangkapan layar
+    var downloadButton = document.getElementById('downloadButton');
+    downloadButton.style.display = 'none';
+
+    // Mengambil elemen-elemen yang akan digabungkan
+    var mapElement = document.getElementById('map');
+    var logoElement = document.getElementById('logo');
+    var legendElement = document.getElementById('legend');
+    var pointElement = document.getElementById('point');
+
+    // Menggunakan html2canvas untuk mengambil screenshot hanya dari elemen dengan ID "map"
+    html2canvas(mapElement, {
+        useCORS: true, // Menggunakan CORS untuk mengatasi masalah keamanan
+    }).then(function (canvas) {
+        // Mendapatkan konteks 2D dari elemen canvas
+        var context = canvas.getContext('2d');
+
+        // Menggambar logo ke dalam elemen canvas dengan ukuran dan posisi yang berbeda
+        context.drawImage(logoElement, 820, 35, 50, 65); // Ubah ukuran dan posisi logo sesuai kebutuhan
+
+        // Menggambar legenda ke dalam elemen canvas dengan ukuran dan posisi yang berbeda
+        context.drawImage(legendElement, 800, 120, 400, 35); // Ubah ukuran dan posisi legenda sesuai kebutuhan
+
+        // Menggambar legenda ke dalam elemen canvas dengan ukuran dan posisi yang berbeda
+        context.drawImage(pointElement, 920, 165, 20, 35); // Ubah ukuran dan posisi legenda sesuai kebutuhan
+
+        
+        // Buat promise untuk setiap marker yang akan digambar
+        var markerPromises = markers.map(function (marker) {
+            return new Promise(function (resolve, reject) {
+                var latLng = marker.getLatLng();
+                var point = map.latLngToContainerPoint(latLng);
+                var icon = marker.options.icon;
+
+                // Gambar ikon marker ke dalam elemen canvas
+                var img = new Image();
+                img.onload = function () {
+                    context.drawImage(img, point.x - icon.options.iconAnchor[0], point.y - icon.options.iconAnchor[1], icon.options.iconSize[0], icon.options.iconSize[1]);
+                    resolve();
+                };
+                img.src = icon.options.iconUrl; // Menggunakan icon.options.iconUrl untuk mengambil URL ikon
+            });
+        });
+
+        // Tunggu hingga semua marker selesai digambar
+        Promise.all(markerPromises).then(function () {
+            // Mengonversi hasil tangkapan layar yang sudah digabungkan menjadi URL gambar PNG
+            var imgData = canvas.toDataURL('image/png');
+
+            // Buat elemen 'a' untuk mengunduh gambar PNG
+            var link = document.createElement('a');
+            link.href = imgData;
+            link.download = 'tangkapan_layar.png';
+            link.click();
+
+            // Tampilkan kembali tombol setelah mengambil tangkapan layar
+            downloadButton.style.display = 'block';
+        });
+    });
+});
+
+console.log('Selesai menggambar marker ke dalam canvas');
+
+// Tambahkan event listener untuk mousemove
+map.on('mousemove', function (e) {
+    var latLngDisplay = document.getElementById('latLngDisplay');
+    var latSpan = document.getElementById('lat');
+    var lngSpan = document.getElementById('lng');
+
+    // Perbarui nilai lintang dan bujur pada elemen HTML
+    latSpan.innerHTML = e.latlng.lat.toFixed(4);
+    lngSpan.innerHTML = e.latlng.lng.toFixed(4);
+});
+
+var baseLayers = {
+        "OSM": OSM,
+
+    };
+
+    var overlays = {
+
+        "Citra Radar": imageRadar,
+        "Citra Satelit": imageSatelit,
+    
+    };
+
+    var layer = L.control.layers(baseLayers, overlays).addTo(map);
+
+</script>
 
 </html>
