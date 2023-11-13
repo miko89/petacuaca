@@ -486,9 +486,8 @@ document.getElementById('shareLocationButton').addEventListener('click', functio
                 var userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
 
                 // Tambahkan marker ke lokasi pengguna
-                var userMarker = L.marker(userLatLng).addTo(map);
-                userMarker.bindPopup("<b>Lokasi Saya</b>")
-
+                var userMarker = L.marker(userLatLng).addTo(map).bindPopup("<b>Lokasi Saya</b>")
+              
                 // Geser peta ke lokasi pengguna
                 map.setView(userLatLng, 13);
             },
