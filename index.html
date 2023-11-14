@@ -477,23 +477,17 @@ var baseLayers = {
     var layer = L.control.layers(baseLayers, overlays).addTo(map);
 
 
-    document.getElementById('shareLocationButton').addEventListener('click', function () {
+// Fungsi untuk menangani klik tombol berbagi lokasi
+document.getElementById('shareLocationButton').addEventListener('click', function () {
     // Gunakan Geolocation API untuk mendapatkan lokasi pengguna
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function (position) {
                 var userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
 
-                // Hapus marker lokasi pengguna jika sudah ada sebelumnya
-                if (userMarker) {
-                    map.removeLayer(userMarker);
-                }
-
                 // Tambahkan marker ke lokasi pengguna
-                userMarker = L.marker(userLatLng, {
-                    icon: redIcon // atau ikon sesuai keinginan
-                }).addTo(map).bindPopup("<b>Lokasi Saya</b>");
-
+                var userMarker = L.marker(userLatLng).addTo(map).bindPopup("<b>Lokasi Saya</b>")
+              
                 // Geser peta ke lokasi pengguna
                 map.setView(userLatLng, 13);
             },
@@ -506,7 +500,6 @@ var baseLayers = {
         alert('Geolocation tidak didukung pada perangkat ini.');
     }
 });
-
 
 </script>
 
