@@ -129,7 +129,7 @@
     </div>
 
     <br>
-    <button id="toggleMarkerButton" class="nav-link">Bagikan Lokasi Saya</button>
+    <button id="toggleMarkerButton" class="nav-link">Lokasi</button>
     <button id="downloadButton" class="nav-link">Unduh Gambar Peta</button>
     <br>
     <div id="latLngDisplay" class="coordinate">Lintang: <span id="lat"></span>, Bujur: <span id="lng"></span></div>
@@ -440,7 +440,7 @@ document.getElementById('downloadButton').addEventListener('click', function () 
             // Buat elemen 'a' untuk mengunduh gambar PNG
             var link = document.createElement('a');
             link.href = imgData;
-            link.download = 'tangkapan_layar.png';
+            link.download = "petacuaca_<span class ='text-radar' id='radardate'></span>.png";
             link.click();
 
             // Tampilkan kembali tombol setelah mengambil tangkapan layar
