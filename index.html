@@ -440,7 +440,7 @@ document.getElementById('downloadButton').addEventListener('click', function () 
             // Buat elemen 'a' untuk mengunduh gambar PNG
             var link = document.createElement('a');
             link.href = imgData;
-            link.download = "petacuaca_<span class ='text-radar' id='radardate'></span>.png";
+            link.download = 'petacuaca_'+ dateTimeWibRadar +'.png';
             link.click();
 
             // Tampilkan kembali tombol setelah mengambil tangkapan layar
