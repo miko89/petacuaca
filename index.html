@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peta Cuaca</title>
+    <title>Aplikasi Peta Cuaca</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
@@ -129,7 +129,7 @@
     </div>
 
     <br>
-    <button id="shareLocationButton" class="nav-link">Bagikan Lokasi Saya</button>
+    <button id="toggleMarkerButton" class="nav-link">Bagikan Lokasi Saya</button>
     <button id="downloadButton" class="nav-link">Unduh Gambar Peta</button>
     <br>
     <div id="latLngDisplay" class="coordinate">Lintang: <span id="lat"></span>, Bujur: <span id="lng"></span></div>
@@ -181,7 +181,7 @@
         labellegenda = ['img/legendaradar.svg'];
         labelpoint = ['img/point.svg'];
         teks3 = ["Lokasi Kejadian"]
-        teks4 = ["@ Sub Bidang Pengolahan Citra Radar Cuaca"]
+        teks4 = ["Pusat Meteorologi Publik - BMKG PUSAT"]
 
 
         // Create a table
@@ -374,7 +374,7 @@ map.on('click', function (e) {
     var marker = L.marker(e.latlng, {
         draggable: true,
         icon: redIcon
-    }).addTo(map);
+    }).addTo(map).bindPopup("<b>Lokasi Kejadian</b>");
 
     // Event handler ketika klik kanan pada marker
     marker.on('contextmenu', function (event) {
@@ -478,28 +478,59 @@ var baseLayers = {
 
 
 // Fungsi untuk menangani klik tombol berbagi lokasi
-document.getElementById('shareLocationButton').addEventListener('click', function () {
-    // Gunakan Geolocation API untuk mendapatkan lokasi pengguna
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function (position) {
-                var userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
+// Deklarasikan variabel untuk menyimpan marker pengguna
+// Deklarasikan variabel untuk menyimpan marker pengguna
+// Deklarasikan variabel untuk menyimpan marker pengguna
+// Deklarasikan variabel userMarker di luar event listener
+// ...
 
-                // Tambahkan marker ke lokasi pengguna
-                var userMarker = L.marker(userLatLng).addTo(map).bindPopup("<b>Lokasi Saya</b>")
-              
-                // Geser peta ke lokasi pengguna
-                map.setView(userLatLng, 13);
-            },
-            function (error) {
-                console.error('Gagal mendapatkan lokasi:', error.message);
-                alert('Gagal mendapatkan lokasi. Pastikan Anda telah mengaktifkan layanan lokasi pada perangkat Anda.');
-            }
-        );
+// ...
+
+// ...
+
+// Deklarasikan variabel userMarker di luar event listener
+// ...
+
+// Deklarasikan variabel userMarker di luar event listener
+var userMarker;
+
+document.getElementById('toggleMarkerButton').addEventListener('click', function () {
+    // Periksa apakah userMarker sudah ada
+    if (userMarker) {
+        // Jika sudah ada, hapus marker
+        map.removeLayer(userMarker);
+        userMarker = null;
     } else {
-        alert('Geolocation tidak didukung pada perangkat ini.');
+        // Jika belum ada, buat marker baru dan tambahkan ke peta
+        // Gunakan Geolocation API untuk mendapatkan lokasi pengguna
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    var userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
+                    userMarker = L.marker(userLatLng).addTo(map).bindPopup("<b>Lokasi Saya</b>");
+
+                    // Tambahkan event listener untuk klik kanan pada marker
+                    userMarker.on('contextmenu', function (event) {
+                        // Tangani event klik kanan pada marker
+                        map.removeLayer(userMarker); // Hapus marker dari peta saat diklik kanan
+                        userMarker = null; // Atur userMarker ke null agar bisa dibuat lagi
+                    });
+
+                    map.setView(userLatLng, 13);
+                },
+                function (error) {
+                    console.error('Gagal mendapatkan lokasi:', error.message);
+                    alert('Gagal mendapatkan lokasi. Pastikan Anda telah mengaktifkan layanan lokasi pada perangkat Anda.');
+                }
+            );
+        } else {
+            alert('Geolocation tidak didukung pada perangkat ini.');
+        }
     }
 });
+
+// ...
+
 
 </script>
 
